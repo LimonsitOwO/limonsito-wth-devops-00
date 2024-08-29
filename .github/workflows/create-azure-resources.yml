@@ -1,27 +1,24 @@
-name: Create Azure Resources
-
-on:
-  workflow_dispatch:
-
+name: Create Azure resources
+on: [workflow_dispatch]
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
 
-    - name: Set up Azure CLI
-      uses: azure/setup-azure-cli@v1
+      # Checkout code
+      - uses: actions/checkout@main
 
-    - name: Login to Azure
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      # Log into Azure
+      - uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Deploy Bicep template
-      run: |
-        az deployment group create \
-          --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-          --template-file path/to/your-template.bicep \
-          --parameters namePrefix=${{ secrets.AZURE_PREFIX }}
+      # Deploy Bicep file
+      - name: create resources
+        uses: azure/arm-deploy@v1
+        with:
+          subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
+          resourceGroupName: ${{ vars.AZURE_RG }}
+          template: ${{ github.workspace }}/config/main.bicep
+          parameters: 'namePrefix=${{ vars.AZURE_PREFIX }}'
+          failOnStdErr: false
